@@ -4,15 +4,12 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 
 class ReceiveSharingIntent {
-  static const MethodChannel _mChannel =
-  const MethodChannel('receive_sharing_intent/messages');
-  static const EventChannel _eChannelMedia =
-  const EventChannel("receive_sharing_intent/events-media");
-  static const EventChannel _eChannelLink =
-  const EventChannel("receive_sharing_intent/events-text");
+  static const MethodChannel _mChannel = const MethodChannel('receive_sharing_intent/messages');
+  static const EventChannel _eChannelMedia = const EventChannel("receive_sharing_intent/events-media");
+  static const EventChannel _eChannelLink = const EventChannel("receive_sharing_intent/events-text");
 
-  static Stream<List<SharedMediaFile>>? _streamMedia;
-  static Stream<String>? _streamLink;
+  static Stream<List<SharedMediaFile>> _streamMedia;
+  static Stream<String> _streamLink;
 
   /// Returns a [Future], which completes to one of the following:
   ///
@@ -25,16 +22,14 @@ class ReceiveSharingIntent {
     final json = await _mChannel.invokeMethod('getInitialMedia');
     if (json == null) return [];
     final encoded = jsonDecode(json);
-    return encoded
-        .map<SharedMediaFile>((file) => SharedMediaFile.fromJson(file))
-        .toList();
+    return encoded.map<SharedMediaFile>((file) => SharedMediaFile.fromJson(file)).toList();
   }
 
   /// Returns a [Future], which completes to one of the following:
   ///
   ///   * the initially stored link (possibly null), on successful invocation;
   ///   * a [PlatformException], if the invocation failed in the platform plugin.
-  static Future<String?> getInitialText() async {
+  static Future<String> getInitialText() async {
     return await _mChannel.invokeMethod('getInitialText');
   }
 
@@ -43,7 +38,7 @@ class ReceiveSharingIntent {
   ///
   /// If the link is not valid as a URI or URI reference,
   /// a [FormatException] is thrown.
-  static Future<Uri?> getInitialTextAsUri() async {
+  static Future<Uri> getInitialTextAsUri() async {
     final data = await getInitialText();
     if (data == null) return null;
     return Uri.parse(data);
@@ -67,25 +62,21 @@ class ReceiveSharingIntent {
   /// not emit that initial one - query either the `getInitialMedia` instead.
   static Stream<List<SharedMediaFile>> getMediaStream() {
     if (_streamMedia == null) {
-      final stream =
-      _eChannelMedia.receiveBroadcastStream("media").cast<String?>();
+      final stream = _eChannelMedia.receiveBroadcastStream("media").cast<String>();
       _streamMedia = stream.transform<List<SharedMediaFile>>(
-        new StreamTransformer<String?, List<SharedMediaFile>>.fromHandlers(
-          handleData: (String? data, EventSink<List<SharedMediaFile>> sink) {
+        new StreamTransformer<String, List<SharedMediaFile>>.fromHandlers(
+          handleData: (String data, EventSink<List<SharedMediaFile>> sink) {
             if (data == null) {
               sink.add([]);
             } else {
               final encoded = jsonDecode(data);
-              sink.add(encoded
-                  .map<SharedMediaFile>(
-                      (file) => SharedMediaFile.fromJson(file))
-                  .toList());
+              sink.add(encoded.map<SharedMediaFile>((file) => SharedMediaFile.fromJson(file)).toList());
             }
           },
         ),
       );
     }
-    return _streamMedia!;
+    return _streamMedia;
   }
 
   /// Sets up a broadcast stream for receiving incoming link change events.
@@ -108,7 +99,7 @@ class ReceiveSharingIntent {
     if (_streamLink == null) {
       _streamLink = _eChannelLink.receiveBroadcastStream("text").cast<String>();
     }
-    return _streamLink!;
+    return _streamLink;
   }
 
   /// A convenience transformation of the stream to a `Stream<Uri>`.
@@ -143,10 +134,10 @@ class SharedMediaFile {
   final String path;
 
   /// Video thumbnail
-  final String? thumbnail;
+  final String thumbnail;
 
   /// Video duration in milliseconds
-  final int? duration;
+  final int duration;
 
   /// Whether its a video or image or file
   final SharedMediaType type;
